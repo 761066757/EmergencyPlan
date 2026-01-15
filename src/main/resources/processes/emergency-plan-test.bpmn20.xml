@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://www.flowable.org/processdef">
+
+    <process id="emergencyPlanProcess" name="应急预案流程" isExecutable="true">
+        <!-- 开始节点（自动执行） -->
+        <startEvent id="startEvent" name="流程开始"></startEvent>
+
+        <!-- 步骤1：接收报警（人工任务，需点击“下一步”完成） -->
+        <userTask id="step1" name="接收报警" flowable:assignee="admin">
+            <extensionElements>
+                <flowable:taskLocalVariable name="stepId" value="1001"/>
+                <flowable:taskLocalVariable name="stepName" value="接收报警"/>
+            </extensionElements>
+        </userTask>
+
+        <!-- 步骤2：派单处理（人工任务） -->
+        <userTask id="step2" name="派单处理" flowable:assignee="admin">
+            <extensionElements>
+                <flowable:taskLocalVariable name="stepId" value="1002"/>
+                <flowable:taskLocalVariable name="stepName" value="派单处理"/>
+            </extensionElements>
+        </userTask>
+
+        <!-- 步骤3：现场处理（人工任务） -->
+        <userTask id="step3" name="现场处理" flowable:assignee="admin">
+            <extensionElements>
+                <flowable:taskLocalVariable name="stepId" value="1003"/>
+                <flowable:taskLocalVariable name="stepName" value="现场处理"/>
+            </extensionElements>
+        </userTask>
+
+        <!-- 结束节点（自动执行） -->
+        <endEvent id="endEvent" name="流程结束"></endEvent>
+
+        <!-- 流转连线（定义执行顺序） -->
+        <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="step1"></sequenceFlow>
+        <sequenceFlow id="flow2" sourceRef="step1" targetRef="step2"></sequenceFlow>
+        <sequenceFlow id="flow3" sourceRef="step2" targetRef="step3"></sequenceFlow>
+        <sequenceFlow id="flow4" sourceRef="step3" targetRef="endEvent"></sequenceFlow>
+    </process>
+</definitions>

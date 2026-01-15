@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.emergency.mapper.SysDictMapper">
+
+    <!-- 按模块+类型查询下拉列表 -->
+    <select id="selectDictOptionsByModuleAndType" resultType="java.util.Map">
+        SELECT dict_label as label, dict_code as value
+        -- FIXME 加模式名
+        FROM public.sys_dict
+        WHERE module_code = #{moduleCode}
+          AND dict_type = #{dictType}
+          AND status = 1
+          AND is_deleted = 0
+        ORDER BY sort_num ASC
+    </select>
+
+    <!-- 按模块查询所有步骤类型 -->
+    <select id="selectStepTypeByModule" resultType="com.emergency.entity.SysDict">
+        SELECT *
+        FROM public.sys_dict
+        WHERE module_code = #{moduleCode}
+          AND dict_type = 'step_type'
+          AND is_deleted = 0
+        ORDER BY sort_num ASC
+    </select>
+
+</mapper>

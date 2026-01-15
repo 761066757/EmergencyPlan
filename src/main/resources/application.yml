@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: emergency-plan
+  # 数据库配置：改用 HikariCP（Spring Boot 默认，无需额外引入依赖）
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource  # 显式指定 HikariCP
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/emergency_plan?currentSchema=flowable
+    username: postgres
+    password: root
+    # HikariCP 核心配置（按需调整，默认值已满足大部分场景）
+    hikari:
+      maximum-pool-size: 20        # 最大连接数（对应 Druid 的 max-active）
+      minimum-idle: 5              # 最小空闲连接数（对应 Druid 的 min-idle）
+      idle-timeout: 300000         # 连接空闲超时（5分钟，对应 Druid 的 min-evictable-idle-time-millis）
+      connection-timeout: 60000    # 连接获取超时（1分钟，对应 Druid 的 max-wait）
+      validation-timeout: 5000     # 连接验证超时
+      connection-test-query: SELECT 1  # 连接验证SQL
+
+# Flowable 配置：恢复 database-schema，HikariCP 完美支持 setSchema() + 保留所有模块 + 表前缀隔离
+# TODO FIXME
+flowable:
+#  modeler:
+#    app:
+#      context-path: /flowable-modeler # 模型器上下文路径（和前端代理的/flowable-modeler一致）
+#  rest:
+#    app:
+#      context-path: /flowable-rest
+  # 其他Flowable配置（如数据库、用户等）
+  database-schema-update: false #（create 启动时删除所有表，再重新创建）（create-drop 启动时创建表，关闭时删除表【仅优雅关闭生效】）（false 启动时不检查、不更新任何表结构，【可手动导入】）（true 启动时检查并更新表结构 ）
+  database-schema: flowable
+  async-executor-activate: true
+
+# MyBatisPlus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      schema: public  # 仅对 MP 自动 CRUD 生效
+      # table-prefix: public.
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath:mapper/**/*.xml
+
+# 服务器配置
+server:
+  port: 3278
+  servlet:
+    context-path: /emergency
