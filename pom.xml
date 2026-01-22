@@ -81,13 +81,13 @@
         </dependency>
 
         <!-- 改 使用Spring Boot 自带 HikariCP 依赖 -->
-<!--        <dependency>-->
-<!--            <groupId>com.alibaba</groupId>-->
-<!--            <artifactId>druid-spring-boot-starter</artifactId>-->
-<!--            <version>1.2.20</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.alibaba</groupId>-->
+        <!--            <artifactId>druid-spring-boot-starter</artifactId>-->
+        <!--            <version>1.2.20</version>-->
+        <!--        </dependency>-->
 
-        <!-- Flowable流程引擎  Flowable 核心 + 模型器 + REST API（必须） -->
+        <!-- 方式1：Flowable流程引擎 starter-->
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-spring-boot-starter</artifactId>
@@ -100,17 +100,20 @@
                 </exclusion>
             </exclusions>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.flowable</groupId>-->
-<!--            <artifactId>flowable-ui-modeler-spring-boot-starter</artifactId>-->
-<!--            <version>${flowable.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.flowable</groupId>-->
-<!--            <artifactId>flowable-ui-rest-spring-boot-starter</artifactId>-->
-<!--            <version>${flowable.version}</version>-->
-<!--        </dependency>-->
 
+        <!-- 方式2：完全抛弃 starter，手动引入核心依赖 -->
+        <!-- Flowable 核心引擎（仅流程执行核心功能） -->
+        <!--        <dependency>-->
+        <!--            <groupId>org.flowable</groupId>-->
+        <!--            <artifactId>flowable-engine</artifactId>-->
+        <!--            <version>7.0.1</version>-->
+        <!--        </dependency>-->
+        <!--        &lt;!&ndash; Flowable Spring 整合（适配 Spring 容器） &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.flowable</groupId>-->
+        <!--            <artifactId>flowable-spring</artifactId>-->
+        <!--            <version>7.0.1</version>-->
+        <!--        </dependency>-->
 
         <!-- 工具类 -->
         <dependency>

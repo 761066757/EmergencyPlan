@@ -3,15 +3,16 @@ package com.emergency.config;
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.flowable.spring.boot.EngineConfigurationConfigurer;
 import org.springframework.context.annotation.Configuration;
-
 import javax.sql.DataSource;
 
 /**
- * Flowable流程引擎配置
+ * @author liao
+ * @version 1.0
+ * @description: Flowable流程引擎配置
+ * @date 2026
  */
 @Configuration
 public class FlowableConfig implements EngineConfigurationConfigurer<SpringProcessEngineConfiguration> {
-
     @Override
     public void configure(SpringProcessEngineConfiguration engineConfiguration) {
         // 关闭Flowable的定时任务（按需开启）

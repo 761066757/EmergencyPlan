@@ -30,6 +30,18 @@ flowable:
   database-schema-update: false #（create 启动时删除所有表，再重新创建）（create-drop 启动时创建表，关闭时删除表【仅优雅关闭生效】）（false 启动时不检查、不更新任何表结构，【可手动导入】）（true 启动时检查并更新表结构 ）
   database-schema: flowable
   async-executor-activate: true
+#  database-type: postgres
+#  # 禁用所有非核心模块
+#  idm:
+#    enabled: false
+#  dmn:
+#    enabled: false
+#  cmmn:
+#    enabled: false
+#  form:
+#    enabled: false  # 关键：禁用 FORM 模块
+#  app:
+#    enabled: false
 
 # MyBatisPlus配置
 mybatis-plus:

@@ -1,7 +1,7 @@
 package com.emergency.vo;
 
-import com.emergency.entity.EmergencyPlan;
-import com.emergency.entity.EmergencyPlanStepRelation;
+import com.emergency.dto.PlanDTO;
+import com.emergency.dto.PlanStepRelationDTO;
 import lombok.Data;
 
 import java.util.List;
@@ -9,6 +9,6 @@ import java.util.List;
 // 预案保存VO
 @Data
 public class PlanSaveVO {
-    private EmergencyPlan plan;
-    private List<EmergencyPlanStepRelation> relations;
+    private PlanDTO plan;
+    private List<PlanStepRelationDTO> planStepRelations;
 }
