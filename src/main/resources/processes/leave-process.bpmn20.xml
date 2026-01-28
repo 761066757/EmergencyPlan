@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:activiti="http://activiti.org/bpmn"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+             id="Definitions_1"
+             targetNamespace="http://flowable.org/processdef">
+    <!-- 流程定义：请假流程 -->
+    <process id="leaveProcess" name="Leave Process" isExecutable="true">
+        <extensionElements>
+            <activiti:executionListener event="start" delegateExpression="${processLifeCycleListener}"/>
+            <activiti:executionListener event="end" delegateExpression="${processLifeCycleListener}"/>
+        </extensionElements>
+        <!-- 开始事件 -->
+        <startEvent id="startEvent"/>
+
+        <!-- 用户任务：提交请假申请 -->
+        <userTask id="applyTask" name="提交请假申请">
+            <!-- 使用activiti扩展标签定义assignee，符合规范 -->
+            <extensionElements>
+                <activiti:assignee>${applicant}</activiti:assignee>
+            </extensionElements>
+        </userTask>
+
+        <!-- 排他网关：判断请假天数 -->
+        <exclusiveGateway id="judgeGateway"/>
+
+        <!-- 用户任务：部门经理审批（≤3天） -->
+        <userTask id="deptManagerTask" name="部门经理审批">
+            <extensionElements>
+                <activiti:assignee>${deptManager}</activiti:assignee>
+            </extensionElements>
+        </userTask>
+        <!-- 用户任务：总经理审批（>3天） -->
+        <userTask id="gmTask" name="总经理审批">
+            <extensionElements>
+                <activiti:assignee>${gm}</activiti:assignee>
+            </extensionElements>
+        </userTask>
+
+        <!-- 结束事件 -->
+        <endEvent id="endEvent"/>
+
+        <!-- 流程连线 -->
+        <sequenceFlow id="startToApply" sourceRef="startEvent" targetRef="applyTask"/>
+        <sequenceFlow id="applyToJudge" sourceRef="applyTask" targetRef="judgeGateway"/>
+
+        <!-- 分支1：≤3天 → 部门经理审批 （改用EL表达式的le方法，避免XML转义）-->
+        <sequenceFlow id="judgeToDeptManager" sourceRef="judgeGateway" targetRef="deptManagerTask">
+            <conditionExpression xsi:type="tFormalExpression">${leaveDays.le(3)}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <!-- 分支2：>3天 → 总经理审批 -->
+        <sequenceFlow id="judgeToGm" sourceRef="judgeGateway" targetRef="gmTask">
+            <conditionExpression xsi:type="tFormalExpression">${leaveDays.gt(3)}</conditionExpression>
+        </sequenceFlow>
+
+        <!-- 审批完成后结束 -->
+        <sequenceFlow id="deptManagerToEnd" sourceRef="deptManagerTask" targetRef="endEvent"/>
+        <sequenceFlow id="gmToEnd" sourceRef="gmTask" targetRef="endEvent"/>
+    </process>
+</definitions>

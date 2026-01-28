@@ -43,14 +43,14 @@ public class EmergencyPlanController {
     }
 
     // 查询预案详情
-    @GetMapping("/getById")
-    public Result<EmergencyPlan> getById(@RequestParam(value = "id") String id) {
-        return Result.success(planService.getById(id));
+    @GetMapping("/getById/{planId}")
+    public Result<EmergencyPlan> getById(@PathVariable(value = "planId") String planId) {
+        return Result.success(planService.getById(planId));
     }
 
     // 查询预案关联步骤
-    @GetMapping("/getRelations")
-    public Result<List<EmergencyPlanStepRelation>> getRelations(@RequestParam(value = "id") String planId) {
+    @GetMapping("/getRelations{id}")
+    public Result<List<EmergencyPlanStepRelation>> getRelations(@PathVariable(value = "id") String planId) {
         return Result.success(planStepRelationService.getByPlanId(planId));
     }
 }

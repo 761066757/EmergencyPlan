@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.emergency.mapper.FlowSchemaMapper">
+    <!-- 1. 查询所有运行中的流程实例（适配 ACT_RU_EXECUTION 完整结构） -->
+    <select id="selectProcInst" resultType="map">
+        SELECT
+            id_ AS processInstanceId,
+            proc_def_id_ AS processDefinitionId,
+            business_key_ AS businessKey,
+            parent_id_ AS parentId,
+            super_exec_ AS superExecutionId,
+            root_proc_inst_id_ AS rootProcessInstanceId,
+            act_id_ AS currentActivityId,
+            is_active_ AS isActive,
+            is_concurrent_ AS isConcurrent,
+            is_scope_ AS isProcessInstance,
+            start_time_ AS startTime,
+            start_user_id_ AS startUserId,
+            tenant_id_ AS tenantId,
+            business_status_ AS businessStatus
+        FROM act_ru_execution
+        WHERE is_scope_ = true          -- 仅流程实例（根节点）
+          AND is_active_ = true         -- 运行中
+          AND suspension_state_ = 1;    -- 未挂起（1=激活，2=挂起）
+    </select>
+
+    <!-- 2. 查询某个流程实例下的所有执行实例（并行分支） -->
+    <select id="selectExecInst" parameterType="string" resultType="map">
+        SELECT
+            e.id_ AS executionId,
+            e.proc_inst_id_ AS processInstanceId,
+            e.is_scope_ AS isProcessInstance,
+            e.super_exec_ AS parentExecutionId,
+            e.act_id_ AS currentActivityId,
+            e.is_concurrent_ AS isConcurrent,
+            e.is_active_ AS isActive,
+            e.start_act_id_ AS startActivityId,
+            e.tenant_id_ AS tenantId
+        FROM act_ru_execution e
+        WHERE e.proc_inst_id_ = #{procInstId}
+        ORDER BY e.id_ ASC;
+    </select>
+
+    <!-- 3. 查询流程实例的历史基本信息（适配 ACT_HI_PROCINST 完整结构） -->
+    <select id="selectProcInstHistory" parameterType="string" resultType="map">
+        SELECT
+            id_ AS historyId,
+            proc_inst_id_ AS processInstanceId,
+            business_key_ AS businessKey,
+            proc_def_id_ AS processDefinitionId,
+            start_time_ AS startTime,
+            end_time_ AS endTime,
+            (CASE WHEN duration_ IS NOT NULL THEN duration_ / 1000 ELSE NULL END) AS durationSeconds,
+            start_user_id_ AS startUserId,
+            start_act_id_ AS startActivityId,
+            end_act_id_ AS endActivityId,
+            super_process_instance_id_ AS superProcessInstanceId,
+            delete_reason_ AS deleteReason,
+            tenant_id_ AS tenantId,
+            name_ AS processName,
+            business_status_ AS businessStatus
+        FROM act_hi_procinst
+        WHERE proc_inst_id_ = #{procInstId}; -- 注意：act_hi_procinst.id_ ≠ proc_inst_id_，用proc_inst_id_匹配
+    </select>
+
+    <!-- 4. 查询流程实例的所有节点执行历史（适配 ACT_HI_ACTINST 完整结构） -->
+    <select id="selectActivityHistory" parameterType="string" resultType="map">
+        SELECT
+            id_ AS activityHistoryId,
+            proc_def_id_ AS processDefinitionId,
+            proc_inst_id_ AS processInstanceId,
+            execution_id_ AS executionId,
+            act_id_ AS activityId,
+            task_id_ AS taskId,
+            call_proc_inst_id_ AS callProcessInstanceId,
+            act_name_ AS activityName,
+            act_type_ AS activityType,
+            assignee_ AS assignee,
+            start_time_ AS startTime,
+            end_time_ AS endTime,
+            (CASE WHEN duration_ IS NOT NULL THEN duration_ / 1000 ELSE NULL END) AS durationSeconds,
+            delete_reason_ AS deleteReason,
+            tenant_id_ AS tenantId
+        FROM act_hi_actinst
+        WHERE proc_inst_id_ = #{procInstId}
+        ORDER BY start_time_ ASC, transaction_order_ ASC;
+    </select>
+
+    <!-- 5. 查询指定用户的任务（适配 ACT_HI_TASKINST 完整结构） -->
+    <select id="selectUserTask" parameterType="map" resultType="map">
+        SELECT
+            id_ AS taskHistoryId,
+            proc_def_id_ AS processDefinitionId,
+            task_def_id_ AS taskDefinitionId,
+            task_def_key_ AS taskDefinitionKey,
+            proc_inst_id_ AS processInstanceId,
+            execution_id_ AS executionId,
+            state_ AS taskState,
+            name_ AS taskName,
+            parent_task_id_ AS parentTaskId,
+            description_ AS taskDescription,
+            owner_ AS taskOwner,
+            assignee_ AS assignee,
+            start_time_ AS startTime,
+            in_progress_time_ AS inProgressTime,
+            in_progress_started_by_ AS inProgressStartedBy,
+            claim_time_ AS claimTime,
+            claimed_by_ AS claimedBy,
+            suspended_time_ AS suspendedTime,
+            suspended_by_ AS suspendedBy,
+            end_time_ AS endTime,
+            completed_by_ AS completedBy,
+            (CASE WHEN duration_ IS NOT NULL THEN duration_ / 1000 ELSE NULL END) AS durationSeconds,
+            delete_reason_ AS deleteReason,
+            priority_ AS priority,
+            due_date_ AS dueDate,
+            form_key_ AS formKey,
+            category_ AS category,
+            tenant_id_ AS tenantId,
+            last_updated_time_ AS lastUpdatedTime
+        FROM act_hi_taskinst t
+        WHERE t.assignee_ = #{userId}
+        <if test="finished != null">
+            AND t.end_time_ IS <if test="finished">NOT</if> NULL
+        </if>
+        <if test="processDefinitionKey != null and processDefinitionKey != ''">
+            AND t.proc_def_id_ LIKE CONCAT(#{processDefinitionKey}, ':%')
+        </if>
+        ORDER BY t.start_time_ DESC
+        <if test="limit != null and offset != null">
+            LIMIT #{limit} OFFSET #{offset}
+        </if>
+    </select>
+
+    <!-- 6. 【新增】按流程实例ID查询所有任务历史 -->
+    <select id="selectTaskByProcInstId" parameterType="string" resultType="map">
+        SELECT
+            id_ AS taskHistoryId,
+            task_def_key_ AS taskDefinitionKey,
+            name_ AS taskName,
+            assignee_ AS assignee,
+            start_time_ AS startTime,
+            claim_time_ AS claimTime,
+            end_time_ AS endTime,
+            completed_by_ AS completedBy,
+            priority_ AS priority,
+            due_date_ AS dueDate,
+            delete_reason_ AS deleteReason
+        FROM act_hi_taskinst
+        WHERE proc_inst_id_ = #{procInstId}
+        ORDER BY start_time_ ASC;
+    </select>
+
+    <!-- 7. 【新增】按时间范围查询任务（支持分页） -->
+    <select id="selectTaskByTimeRange" parameterType="map" resultType="map">
+        SELECT
+            id_ AS taskHistoryId,
+            assignee_ AS assignee,
+            name_ AS taskName,
+            proc_inst_id_ AS processInstanceId,
+            start_time_ AS startTime,
+            end_time_ AS endTime,
+            priority_ AS priority
+            FROM act_hi_taskinst
+        WHERE start_time_ BETWEEN #{startTime} AND #{endTime}
+        <if test="assignee != null and assignee != ''">
+            AND assignee_ = #{assignee}
+        </if>
+        ORDER BY start_time_ DESC
+        LIMIT #{limit} OFFSET #{offset};
+    </select>
+</mapper>

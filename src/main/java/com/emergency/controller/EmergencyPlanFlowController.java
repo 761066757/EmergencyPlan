@@ -14,10 +14,13 @@ import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
+import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
+import org.flowable.task.api.history.HistoricTaskInstance;
+import org.flowable.variable.api.history.HistoricVariableInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -66,7 +69,8 @@ public class EmergencyPlanFlowController {
                 return Result.error(400, "该预案未配置BPMN流程XML");
             }
 
-            // 2. 部署BPMN XML到Flowable引擎
+            // 2. 部署BPMN XML到Flowable引擎 NOTES：act_re_deployment、act_re_procdef
+            // note 创建部署
             Deployment deployment = repositoryService.createDeployment()
                     // 部署名称
                     .name("预案流程-" + plan.getPlanName())
@@ -74,7 +78,16 @@ public class EmergencyPlanFlowController {
                     .addString(planId + ".bpmn20.xml", plan.getBpmnXml())
                     .deploy();
 
-            // 3. 保存部署关联关系（先查后更，避免重复）
+            // note 查询流程定义
+            List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery()
+                    .deploymentId(deployment.getId()) // 根据部署ID查流程定义
+                    .list();
+            log.info("查询流程定义：" + processDefinitions);
+
+            // note 删除部署
+            //repositoryService.deleteDeployment(deployment.getId());
+
+            // 3. 保存部署关联关系（先查后更，避免重复） NOTES：业务保存Flowable部署ID
             QueryWrapper<EmergencyPlanFlowRel> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("plan_id", planId);
             EmergencyPlanFlowRel rel = relMapper.selectOne(queryWrapper);
@@ -119,7 +132,7 @@ public class EmergencyPlanFlowController {
 
             // 2. 检查是否已启动实例
             if (StringUtils.isNotEmpty(rel.getProcInstId())) {
-                // 检查实例是否还在运行
+                // 检查实例是否还在运行 // note 查询流程实例
                 ProcessInstance instance = runtimeService.createProcessInstanceQuery()
                         .processInstanceId(rel.getProcInstId())
                         .singleResult();
@@ -135,13 +148,19 @@ public class EmergencyPlanFlowController {
             if (processDefinitions.isEmpty()) {
                 return Result.error(404, "该部署下无流程定义");
             }
-            String processKey = processDefinitions.get(0).getKey(); // 获取流程KEY（如emptyProcess）
+            String processKey = processDefinitions.get(0).getKey(); // 获取流程KEY（如xml.id："emptyProcess"）
 
             // 4. 启动流程实例（关联预案ID作为业务主键）
-            // 传递预案ID到流程变量
+            // 传递预案ID到流程变量 // note 设置流程变量
             Map<String, Object> variables = new HashMap<>();
             variables.put("planId", planId);
-            // 重载方法：startProcessInstanceByKey(流程KEY, 业务主键, 流程变量)
+//            variables.put("applicant", applicant);
+//            variables.put("deptManager", deptManager);
+//            variables.put("gm", gm);
+//            variables.put("leaveDays", leaveDays);
+
+            // 重载方法：startProcessInstanceByKey(流程KEY, 业务主键, 流程变量) note 启动流程
+            // NOTES：act_ru_execution：IS_SCOPE_ = true 流程实例 | IS_SCOPE_ = false 执行实例 、act_hi_procinst、act_hi_actinst
             ProcessInstance instance = runtimeService.startProcessInstanceByKey(
                     processKey,          // 流程KEY（必填）
                     planId,              // 业务主键（关联预案ID，方便后续查询）
@@ -180,10 +199,10 @@ public class EmergencyPlanFlowController {
     /**
      * 3. 查询当前待办任务（显示UI上的“当前步骤”）
      */
-    @GetMapping("/task")
-    public Result<Map<String, Object>> getCurrentTask(@RequestBody DeployRequest request) {
+    @GetMapping("/task/{planId}")
+    public Result<Map<String, Object>> getCurrentTask(@PathVariable String planId) {
         try {
-            String planId = request.getPlanId();
+            //String planId = request.getPlanId();
             // 1. 查询关联表
             QueryWrapper<EmergencyPlanFlowRel> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("plan_id", planId);
@@ -197,10 +216,10 @@ public class EmergencyPlanFlowController {
                 return Result.success("流程已结束", null);
             }
 
-            // 3. 查询最新待办任务（避免关联表数据过期）
+            // 3. 查询最新待办任务（避免关联表数据过期）// note 查询任务
             List<Task> tasks = taskService.createTaskQuery()
                     .processInstanceId(rel.getProcInstId())
-                    .active()
+                    .active() //
                     .list();
 
             Map<String, Object> taskInfo = new HashMap<>();
@@ -240,7 +259,7 @@ public class EmergencyPlanFlowController {
     @PostMapping("/next/{taskId}")
     public Result<Map<String, Object>> completeTask(@PathVariable String taskId) {
         try {
-            // 1. 校验任务是否存在
+            // 1. 校验任务是否存在 // note 查询任务
             Task task = taskService.createTaskQuery()
                     .taskId(taskId)
                     .singleResult();
@@ -248,7 +267,7 @@ public class EmergencyPlanFlowController {
                 return Result.error(404, "任务不存在或已完成");
             }
 
-            // 2. 完成当前任务（核心：Flowable自动流转到下一个节点）
+            // 2. 完成当前任务（核心：Flowable自动流转到下一个节点） // note 完成任务
             taskService.complete(taskId);
 
             // 3. 查询预案ID（从流程变量/业务主键）
@@ -313,9 +332,48 @@ public class EmergencyPlanFlowController {
         }
     }
 
+    /**
+     * 5. 查询流程历史（包括审批节点、处理人、耗时）
+     */
+    @GetMapping("/history/{procInstId}")
+    public String queryProcessHistory(@PathVariable String procInstId) {
+        // 查询流程实例基本信息 // note 查询历史流程
+        HistoricProcessInstance historicProcInst = historyService.createHistoricProcessInstanceQuery()
+                .processInstanceId(procInstId)
+                .singleResult();
+
+        // 查询流程所有任务的执行记录 // note 查询历史任务
+        List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery()
+                .processInstanceId(procInstId)
+                .orderByTaskCreateTime()
+                .asc()
+                .list();
+
+        // 查询流程实例变量信息 // note 查询历史变量
+        List<HistoricVariableInstance> variableInstances = historyService.createHistoricVariableInstanceQuery().
+                processInstanceId(procInstId)
+                .list();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("流程实例：").append(historicProcInst.getProcessDefinitionName())
+                .append("，业务主键：").append(historicProcInst.getBusinessKey())
+                .append("，启动时间：").append(historicProcInst.getStartTime())
+                .append("，结束时间：").append(historicProcInst.getEndTime())
+                .append("，总耗时：").append(historicProcInst.getDurationInMillis() / 1000).append("秒\n");
+
+        for (HistoricTaskInstance task : historicTasks) {
+            sb.append("任务：").append(task.getName())
+                    .append("，处理人：").append(task.getAssignee())
+                    .append("，创建时间：").append(task.getCreateTime())
+                    .append("，完成时间：").append(task.getEndTime())
+                    .append("，耗时：").append(task.getDurationInMillis() / 1000).append("秒\n");
+        }
+        return sb.toString();
+    }
+
 
     /**
-     * 5. 辅助接口：根据预案ID获取BPMN XML（供前端渲染）
+     * 6. 辅助接口：根据预案ID获取BPMN XML（供前端渲染）
      *
      * @param planId 预案ID
      */

@@ -4,7 +4,7 @@
              xmlns:flowable="http://flowable.org/bpmn"
              targetNamespace="http://www.flowable.org/processdef">
 
-    <process id="emergencyPlanProcess" name="应急预案流程" isExecutable="true">
+    <process id="testProcess" name="测试流程" isExecutable="true">
         <!-- 开始节点（自动执行） -->
         <startEvent id="startEvent" name="流程开始"></startEvent>
 
