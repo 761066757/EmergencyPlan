@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.emergency.mapper.EmergencyPlanMapper">
+
+    <resultMap id="PlanQueryVOMap" type="com.emergency.vo.PlanQueryVO">
+        <!-- 原 EmergencyPlan 字段映射 -->
+        <id column="plan_id" property="planId"/> <!-- 主键字段映射 -->
+        <id column="rel_id" property="relId"/> <!-- 流程关系主键（可忽略，不影响映射） -->
+        <result column="plan_name" property="planName"/>
+        <result column="plan_type" property="planType"/>
+        <result column="plan_desc" property="planDesc"/>
+        <result column="bpmn_xml" property="bpmnXml"/>
+        <result column="camera_ids" property="cameraIds"/>
+        <result column="plan_create_time" property="planCreateTime"/>
+        <result column="plan_update_time" property="planUpdateTime"/>
+        <result column="plan_is_deleted" property="planIsDeleted"/>
+
+        <!-- 原 EmergencyPlanFlowRel 字段映射 -->
+        <result column="rel_plan_id" property="relPlanId"/>
+        <result column="deploy_id" property="deployId"/>
+        <result column="proc_inst_id" property="procInstId"/>
+        <result column="current_task_id" property="currentTaskId"/>
+        <result column="current_task_name" property="currentTaskName"/>
+        <result column="flow_status" property="flowStatus"/>
+        <result column="rel_create_time" property="relCreateTime"/>
+        <result column="rel_update_time" property="relUpdateTime"/>
+        <result column="rel_is_deleted" property="relIsDeleted"/>
+    </resultMap>
+
+    <!-- 2. 关联查询 SQL（左连接，扁平返回所有字段） -->
+    <select id="selectPlanQueryVOList" resultMap="PlanQueryVOMap">
+        SELECT
+        -- 原 EmergencyPlan 字段，添加 plan_ 前缀别名，对应VO的 planXXX 字段
+        ep.id AS plan_id,
+        ep.plan_name AS plan_name,
+        ep.plan_type AS plan_type,
+        ep.plan_desc AS plan_desc,
+        ep.bpmn_xml AS bpmn_xml,
+        ep.camera_ids AS camera_ids,
+        ep.create_time AS plan_create_time,
+        ep.update_time AS plan_update_time,
+        ep.is_deleted AS plan_is_deleted,
+
+        -- 原 EmergencyPlanFlowRel 字段，添加 rel_ 前缀别名，对应VO的 relXXX 字段
+        epr.id AS rel_id,
+        epr.plan_id AS rel_plan_id,
+        epr.deploy_id AS deploy_id,
+        epr.proc_inst_id AS proc_inst_id,
+        epr.current_task_id AS current_task_id,
+        epr.current_task_name AS current_task_name,
+        epr.flow_status AS flow_status,
+        epr.create_time AS rel_create_time,
+        epr.update_time AS rel_update_time,
+        epr.is_deleted AS rel_is_deleted
+
+        FROM
+        public.emergency_plan ep
+        LEFT JOIN
+        public.emergency_plan_flow_rel epr ON ep.id = epr.plan_id
+        WHERE
+        -- 逻辑删除过滤：只查询未删除的数据
+        ep.is_deleted = 0
+        AND (epr.is_deleted = 0 OR epr.id IS NULL) <!-- 兼容无流程关系的预案，避免数据丢失 -->
+        ORDER BY
+        ep.create_time DESC; <!-- 按预案创建时间倒序，提升查询实用性 -->
+    </select>
+</mapper>

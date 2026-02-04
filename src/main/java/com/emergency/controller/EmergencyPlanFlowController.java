@@ -1,5 +1,6 @@
 package com.emergency.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.emergency.entity.EmergencyPlan;
 import com.emergency.entity.EmergencyPlanFlowRel;
@@ -7,7 +8,7 @@ import com.emergency.mapper.EmergencyPlanFlowRelMapper;
 import com.emergency.mapper.EmergencyPlanMapper;
 import com.emergency.vo.DeployRequest;
 import com.emergency.vo.Result;
-import lombok.Data;
+import com.emergency.vo.TaskVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.engine.HistoryService;
@@ -24,9 +25,7 @@ import org.flowable.variable.api.history.HistoricVariableInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author liao
@@ -38,18 +37,24 @@ import java.util.List;
 @RestController
 @RequestMapping("/flow")
 public class EmergencyPlanFlowController {
+    // 根据部署ID查流程定义
     @Autowired
-    private RepositoryService repositoryService;       // Flowable部署服务
+    private RepositoryService repositoryService;
+    // Flowable实例启动服务
     @Autowired
-    private RuntimeService runtimeService;             // Flowable实例启动服务
+    private RuntimeService runtimeService;
+    // Flowable任务处理服务
     @Autowired
-    private TaskService taskService;                   // Flowable任务处理服务
+    private TaskService taskService;
+    // Flowable历史查询服务
     @Autowired
-    private HistoryService historyService;             // Flowable历史查询服务
+    private HistoryService historyService;
+    // 预案Mapper
     @Autowired
-    private EmergencyPlanMapper emergencyPlanMapper;   // 预案Mapper
+    private EmergencyPlanMapper emergencyPlanMapper;
+    // 关联表Mapper
     @Autowired
-    private EmergencyPlanFlowRelMapper relMapper;      // 关联表Mapper
+    private EmergencyPlanFlowRelMapper relMapper;
 
     /**
      * 1. 部署流程（从预案表读取BPMN XML部署）
@@ -80,7 +85,8 @@ public class EmergencyPlanFlowController {
 
             // note 查询流程定义
             List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery()
-                    .deploymentId(deployment.getId()) // 根据部署ID查流程定义
+                    // 根据部署ID查流程定义
+                    .deploymentId(deployment.getId())
                     .list();
             log.info("查询流程定义：" + processDefinitions);
 
@@ -95,7 +101,8 @@ public class EmergencyPlanFlowController {
                 rel = new EmergencyPlanFlowRel();
                 rel.setPlanId(planId);
                 rel.setDeployId(deployment.getId());
-                rel.setFlowStatus(1); // 运行中
+                // 运行中
+                rel.setFlowStatus(1);
                 relMapper.insert(rel);
             } else {
                 rel.setDeployId(deployment.getId());
@@ -143,12 +150,14 @@ public class EmergencyPlanFlowController {
 
             // 3. 通过部署ID查询流程定义，获取流程KEY（确保启动的是该部署对应的流程）
             List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery()
-                    .deploymentId(rel.getDeployId()) // 根据部署ID查流程定义
+                    // 根据部署ID查流程定义
+                    .deploymentId(rel.getDeployId())
                     .list();
             if (processDefinitions.isEmpty()) {
                 return Result.error(404, "该部署下无流程定义");
             }
-            String processKey = processDefinitions.get(0).getKey(); // 获取流程KEY（如xml.id："emptyProcess"）
+            // 获取流程KEY（如xml.id："emptyProcess"）
+            String processKey = processDefinitions.get(0).getKey();
 
             // 4. 启动流程实例（关联预案ID作为业务主键）
             // 传递预案ID到流程变量 // note 设置流程变量
@@ -162,9 +171,12 @@ public class EmergencyPlanFlowController {
             // 重载方法：startProcessInstanceByKey(流程KEY, 业务主键, 流程变量) note 启动流程
             // NOTES：act_ru_execution：IS_SCOPE_ = true 流程实例 | IS_SCOPE_ = false 执行实例 、act_hi_procinst、act_hi_actinst
             ProcessInstance instance = runtimeService.startProcessInstanceByKey(
-                    processKey,          // 流程KEY（必填）
-                    planId,              // 业务主键（关联预案ID，方便后续查询）
-                    variables            // 流程变量
+                    // 流程KEY（必填）
+                    processKey,
+                    // 业务主键（关联预案ID，方便后续查询）
+                    planId,
+                    // 流程变量
+                    variables
             );
 
 
@@ -197,56 +209,45 @@ public class EmergencyPlanFlowController {
 
 
     /**
-     * 3. 查询当前待办任务（显示UI上的“当前步骤”）
+     * 3. 查询当前待办任务(包含并行任务)（显示UI上的“当前步骤”）
      */
     @GetMapping("/task/{planId}")
-    public Result<Map<String, Object>> getCurrentTask(@PathVariable String planId) {
+    public Result<List<TaskVO>> getCurrentTask(@PathVariable String planId) {
         try {
-            //String planId = request.getPlanId();
-            // 1. 查询关联表
-            QueryWrapper<EmergencyPlanFlowRel> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("plan_id", planId);
-            EmergencyPlanFlowRel rel = relMapper.selectOne(queryWrapper);
-            if (rel == null || StringUtils.isEmpty(rel.getProcInstId())) {
-                return Result.error(400, "流程实例未启动");
+            // 1. 查询预案流程关联记录
+            EmergencyPlanFlowRel rel = relMapper.selectOne(
+                    new LambdaQueryWrapper<EmergencyPlanFlowRel>()
+                            .eq(EmergencyPlanFlowRel::getPlanId, planId)
+                            .eq(EmergencyPlanFlowRel::getIsDeleted, 0)
+            );
+            if (rel == null || rel.getProcInstId() == null || rel.getFlowStatus() != 1) {
+                // 无关联记录/未运行，返回空列表
+                return Result.success(new ArrayList<>());
             }
 
-            // 2. 检查流程状态
-            if (rel.getFlowStatus() == 2) {
-                return Result.success("流程已结束", null);
-            }
-
-            // 3. 查询最新待办任务（避免关联表数据过期）// note 查询任务
+            // 2. 查询该流程实例下的所有活跃任务（并行网关会返回多个，用list()）
             List<Task> tasks = taskService.createTaskQuery()
                     .processInstanceId(rel.getProcInstId())
-                    .active() //
+                    .active()
+                    .orderByTaskCreateTime()
+                    .asc()
                     .list();
 
-            Map<String, Object> taskInfo = new HashMap<>();
-            if (tasks.isEmpty()) {
-                // 无待办任务 → 流程结束
-                rel.setFlowStatus(2);
-                rel.setCurrentTaskId("");
-                rel.setCurrentTaskName("");
-                relMapper.updateById(rel);
-                taskInfo.put("taskId", "");
-                taskInfo.put("taskName", "流程已结束");
-            } else {
-                // 更新关联表为最新任务
-                Task currentTask = tasks.get(0);
-                rel.setCurrentTaskId(currentTask.getId());
-                rel.setCurrentTaskName(currentTask.getName());
-                relMapper.updateById(rel);
+            // 3. 转换为VO，必须包含 bpmnElementId = task.getTaskDefinitionKey()
+            List<TaskVO> taskVOList = tasks.stream().map(task -> {
+                TaskVO vo = new TaskVO();
+                vo.setTaskId(task.getId()); // 任务ID
+                vo.setTaskName(task.getName()); // 任务名称
+                vo.setCreateTime(task.getCreateTime()); // 创建时间
+                vo.setBpmnElementId(task.getTaskDefinitionKey()); // 核心：BPMN节点ID，用于前端高亮
+                vo.setPlanId(planId); // 预案ID
+                return vo;
+            }).toList();
 
-                taskInfo.put("taskId", currentTask.getId());
-                taskInfo.put("taskName", currentTask.getName());
-                taskInfo.put("procInstId", rel.getProcInstId());
-            }
-
-            return Result.success(taskInfo);
+            return Result.success(taskVOList);
         } catch (Exception e) {
-            log.error("查询待办任务失败", e);
-            return Result.error("查询待办任务失败：" + e.getMessage());
+            log.error("获取待办任务失败", e);
+            return Result.error("获取待办任务失败：" + e.getMessage());
         }
     }
 
@@ -267,63 +268,77 @@ public class EmergencyPlanFlowController {
                 return Result.error(404, "任务不存在或已完成");
             }
 
-            // 2. 完成当前任务（核心：Flowable自动流转到下一个节点） // note 完成任务
+            // 先缓存流程实例ID
+            String procInstId = task.getProcessInstanceId();
+
+            // 2. 优先从任务的流程变量获取planId，兼容流程最后一步（processInstance为null）
+            String planId = (String) runtimeService.getVariable(procInstId, "planId");
+            // 兜底：从流程实例的businessKey获取（需启动流程时设置）
+            if (planId == null || planId.trim().isEmpty()) {
+                ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                        .processInstanceId(procInstId)
+                        .singleResult();
+                if (processInstance != null) {
+                    planId = processInstance.getBusinessKey();
+                }
+            }
+            // 双重兜底：若仍为空，直接从关联表反向查询（终极方案，杜绝null）
+            if (planId == null || planId.trim().isEmpty()) {
+                EmergencyPlanFlowRel rel = relMapper.selectOne(
+                        new LambdaQueryWrapper<EmergencyPlanFlowRel>()
+                                .eq(EmergencyPlanFlowRel::getProcInstId, procInstId)
+                                .eq(EmergencyPlanFlowRel::getIsDeleted, 0)
+                );
+                if (rel != null) {
+                    planId = rel.getPlanId();
+                }
+            }
+            // 最终校验
+            if (planId == null || planId.trim().isEmpty()) {
+                return Result.error(400, "未关联预案ID，请检查流程启动时是否绑定预案");
+            }
+
+            // 3. 完成当前任务（核心：Flowable自动流转到下一个节点/结束流程）
             taskService.complete(taskId);
 
-            // 3. 查询预案ID（从流程变量/业务主键）
-            ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
-                    .processInstanceId(task.getProcessInstanceId()) // 流程实例ID
-                    .singleResult(); // 查询单个实例
-
-            String planId = null;
-            if (processInstance != null) {
-                planId = processInstance.getBusinessKey(); // 获取启动时传入的预案ID（businessKey）
-            }
-            if (planId == null) {
-                return Result.error(400, "未关联预案ID");
-            }
-
-            // 4. 查询下一个待办任务
+            // 4. 查询下一个待办任务（判断流程是否结束）
             List<Task> nextTasks = taskService.createTaskQuery()
-                    .processInstanceId(task.getProcessInstanceId())
+                    .processInstanceId(procInstId)
                     .active()
                     .list();
 
             Map<String, Object> result = new HashMap<>();
+            EmergencyPlanFlowRel rel = relMapper.selectOne(
+                    new LambdaQueryWrapper<EmergencyPlanFlowRel>()
+                            .eq(EmergencyPlanFlowRel::getPlanId, planId)
+                            .eq(EmergencyPlanFlowRel::getIsDeleted, 0)
+            );
+            if (rel == null) {
+                return Result.error(404, "预案流程关联记录不存在");
+            }
+
             if (nextTasks.isEmpty()) {
-                // 无下一个任务 → 流程结束
+                // 无下一个任务 → 流程结束，更新关联表状态为【已结束】
                 result.put("msg", "流程已完成");
                 result.put("nextTaskId", "");
                 result.put("nextTaskName", "流程结束");
-
-                // 更新关联表状态
-                QueryWrapper<EmergencyPlanFlowRel> queryWrapper = new QueryWrapper<>();
-                queryWrapper.eq("plan_id", planId);
-                EmergencyPlanFlowRel rel = relMapper.selectOne(queryWrapper);
-                if (rel != null) {
-                    // 已结束
-                    rel.setFlowStatus(2);
-                    rel.setCurrentTaskId("");
-                    rel.setCurrentTaskName("");
-                    relMapper.updateById(rel);
-                }
+                // 2-已结束
+                rel.setFlowStatus(2);
+                rel.setCurrentTaskId("");
+                rel.setCurrentTaskName("");
             } else {
-                // 有下一个任务 → 返回任务信息
+                // 有下一个任务 → 返回第一个任务信息，更新关联表
                 Task nextTask = nextTasks.get(0);
                 result.put("msg", "流程已流转到下一步");
                 result.put("nextTaskId", nextTask.getId());
                 result.put("nextTaskName", nextTask.getName());
-
-                // 更新关联表
-                QueryWrapper<EmergencyPlanFlowRel> queryWrapper = new QueryWrapper<>();
-                queryWrapper.eq("plan_id", planId);
-                EmergencyPlanFlowRel rel = relMapper.selectOne(queryWrapper);
-                if (rel != null) {
-                    rel.setCurrentTaskId(nextTask.getId());
-                    rel.setCurrentTaskName(nextTask.getName());
-                    relMapper.updateById(rel);
-                }
+                rel.setCurrentTaskId(nextTask.getId());
+                rel.setCurrentTaskName(nextTask.getName());
             }
+
+            // 统一更新关联表，避免重复代码
+            //rel.setUpdateTime(LocalDateTime.now());
+            relMapper.updateById(rel);
 
             return Result.success(result);
         } catch (Exception e) {

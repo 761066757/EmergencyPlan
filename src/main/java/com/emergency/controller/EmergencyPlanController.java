@@ -5,6 +5,7 @@ import com.emergency.entity.EmergencyPlanStepRelation;
 import com.emergency.service.EmergencyPlanService;
 import com.emergency.service.EmergencyPlanStepRelationService;
 import com.emergency.vo.EmergencyStepVO;
+import com.emergency.vo.PlanQueryVO;
 import com.emergency.vo.PlanSaveVO;
 import com.emergency.vo.Result;
 import jakarta.annotation.Resource;
@@ -25,9 +26,9 @@ public class EmergencyPlanController {
 
     //查询预案列表
     @GetMapping("/list")
-    public Result<List<EmergencyPlan>> getPlanList() {
+    public Result<List<PlanQueryVO>> getPlanList() {
         try {
-            List<EmergencyPlan> planList = planService.getPlanList();
+            List<PlanQueryVO> planList = planService.getPlanList();
             return Result.success(planList);
         } catch (Exception e) {
             log.error("查询预案列表失败", e);

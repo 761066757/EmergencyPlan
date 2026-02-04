@@ -5,10 +5,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.emergency.dto.PlanDTO;
 import com.emergency.dto.PlanStepRelationDTO;
 import com.emergency.entity.EmergencyPlan;
+import com.emergency.entity.EmergencyPlanFlowRel;
 import com.emergency.entity.EmergencyPlanStepRelation;
+import com.emergency.mapper.EmergencyPlanFlowRelMapper;
 import com.emergency.mapper.EmergencyPlanMapper;
 import com.emergency.service.EmergencyPlanService;
 import com.emergency.service.EmergencyPlanStepRelationService;
+import com.emergency.vo.PlanQueryVO;
 import jakarta.annotation.Resource;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -29,8 +32,8 @@ public class EmergencyPlanServiceImpl extends ServiceImpl<EmergencyPlanMapper, E
 
     // 查询预案列表
     @Override
-    public List<EmergencyPlan> getPlanList() {
-        return emergencyPlanMapper.selectList(new LambdaQueryWrapper<>());
+    public List<PlanQueryVO> getPlanList() {
+        return emergencyPlanMapper.selectPlanQueryVOList();
     }
 
     // 保存预案（含关联步骤）
