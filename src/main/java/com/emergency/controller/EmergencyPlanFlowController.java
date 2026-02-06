@@ -91,7 +91,7 @@ public class EmergencyPlanFlowController {
             log.info("查询流程定义：" + processDefinitions);
 
             // note 删除部署
-            //repositoryService.deleteDeployment(deployment.getId());
+            // repositoryService.deleteDeployment(deployment.getId());
 
             // 3. 保存部署关联关系（先查后更，避免重复） NOTES：业务保存Flowable部署ID
             QueryWrapper<EmergencyPlanFlowRel> queryWrapper = new QueryWrapper<>();
@@ -115,7 +115,6 @@ public class EmergencyPlanFlowController {
             return Result.error("部署流程失败：" + e.getMessage());
         }
     }
-
 
     /**
      * 2. 启动流程实例（基于已部署的流程）
@@ -163,22 +162,21 @@ public class EmergencyPlanFlowController {
             // 传递预案ID到流程变量 // note 设置流程变量
             Map<String, Object> variables = new HashMap<>();
             variables.put("planId", planId);
-//            variables.put("applicant", applicant);
-//            variables.put("deptManager", deptManager);
-//            variables.put("gm", gm);
-//            variables.put("leaveDays", leaveDays);
+            // variables.put("applicant", applicant);
+            // variables.put("deptManager", deptManager);
+            // variables.put("gm", gm);
+            // variables.put("leaveDays", leaveDays);
 
             // 重载方法：startProcessInstanceByKey(流程KEY, 业务主键, 流程变量) note 启动流程
-            // NOTES：act_ru_execution：IS_SCOPE_ = true 流程实例 | IS_SCOPE_ = false 执行实例 、act_hi_procinst、act_hi_actinst
+            // NOTES：act_ru_execution：IS_SCOPE_ = true 流程实例 | IS_SCOPE_ = false 执行实例
+            // 、act_hi_procinst、act_hi_actinst
             ProcessInstance instance = runtimeService.startProcessInstanceByKey(
                     // 流程KEY（必填）
                     processKey,
                     // 业务主键（关联预案ID，方便后续查询）
                     planId,
                     // 流程变量
-                    variables
-            );
-
+                    variables);
 
             // 5. 查询启动后的第一个待办任务
             List<Task> tasks = taskService.createTaskQuery()
@@ -207,7 +205,6 @@ public class EmergencyPlanFlowController {
         }
     }
 
-
     /**
      * 3. 查询当前待办任务(包含并行任务)（显示UI上的“当前步骤”）
      */
@@ -218,8 +215,7 @@ public class EmergencyPlanFlowController {
             EmergencyPlanFlowRel rel = relMapper.selectOne(
                     new LambdaQueryWrapper<EmergencyPlanFlowRel>()
                             .eq(EmergencyPlanFlowRel::getPlanId, planId)
-                            .eq(EmergencyPlanFlowRel::getIsDeleted, 0)
-            );
+                            .eq(EmergencyPlanFlowRel::getIsDeleted, 0));
             if (rel == null || rel.getProcInstId() == null || rel.getFlowStatus() != 1) {
                 // 无关联记录/未运行，返回空列表
                 return Result.success(new ArrayList<>());
@@ -250,7 +246,6 @@ public class EmergencyPlanFlowController {
             return Result.error("获取待办任务失败：" + e.getMessage());
         }
     }
-
 
     /**
      * 4. 下一步：完成当前任务，流程流转到下一个节点
@@ -287,8 +282,7 @@ public class EmergencyPlanFlowController {
                 EmergencyPlanFlowRel rel = relMapper.selectOne(
                         new LambdaQueryWrapper<EmergencyPlanFlowRel>()
                                 .eq(EmergencyPlanFlowRel::getProcInstId, procInstId)
-                                .eq(EmergencyPlanFlowRel::getIsDeleted, 0)
-                );
+                                .eq(EmergencyPlanFlowRel::getIsDeleted, 0));
                 if (rel != null) {
                     planId = rel.getPlanId();
                 }
@@ -311,33 +305,51 @@ public class EmergencyPlanFlowController {
             EmergencyPlanFlowRel rel = relMapper.selectOne(
                     new LambdaQueryWrapper<EmergencyPlanFlowRel>()
                             .eq(EmergencyPlanFlowRel::getPlanId, planId)
-                            .eq(EmergencyPlanFlowRel::getIsDeleted, 0)
-            );
+                            .eq(EmergencyPlanFlowRel::getIsDeleted, 0));
             if (rel == null) {
                 return Result.error(404, "预案流程关联记录不存在");
             }
 
             if (nextTasks.isEmpty()) {
                 // 无下一个任务 → 流程结束，更新关联表状态为【已结束】
-                result.put("msg", "流程已完成");
-                result.put("nextTaskId", "");
-                result.put("nextTaskName", "流程结束");
                 // 2-已结束
                 rel.setFlowStatus(2);
                 rel.setCurrentTaskId("");
                 rel.setCurrentTaskName("");
-            } else {
-                // 有下一个任务 → 返回第一个任务信息，更新关联表
+                result.put("msg", "流程已完成");
+                result.put("nextTaskId", "");
+                result.put("nextTaskName", "流程结束");
+            } else if (nextTasks.size() == 1) {
+                // 单个任务逻辑 有下一个任务 → 返回第一个任务信息，更新关联表
                 Task nextTask = nextTasks.get(0);
-                result.put("msg", "流程已流转到下一步");
-                result.put("nextTaskId", nextTask.getId());
-                result.put("nextTaskName", nextTask.getName());
                 rel.setCurrentTaskId(nextTask.getId());
                 rel.setCurrentTaskName(nextTask.getName());
+                result.put("msg", "流程已流转到下一步");
+                result.put("isParallelTask", false);
+                result.put("nextTaskId", nextTask.getId());
+                result.put("nextTaskName", nextTask.getName());
+            } else {
+                // 并行任务逻辑：返回所有任务信息
+                result.put("msg", "流程已流转到多个并行任务");
+                result.put("isParallelTask", true);
+                // 构建并行任务列表
+                String parallelTaskIds = "";
+                String parallelTaskNames = "";
+                for (Task nextTask : nextTasks) {
+                    parallelTaskIds += nextTask.getId() + ",";
+                    parallelTaskNames += nextTask.getName() + ",";
+                }
+                rel.setCurrentTaskId(parallelTaskIds);
+                rel.setCurrentTaskName(parallelTaskNames);
+                // 并行任务逻辑：返回所有任务信息
+                result.put("msg", "流程已流转到多个并行任务");
+                result.put("isParallelTask", true);
+                result.put("nextTaskIds", parallelTaskIds);
+                result.put("nextTaskNames", parallelTaskNames);
             }
 
             // 统一更新关联表，避免重复代码
-            //rel.setUpdateTime(LocalDateTime.now());
+            // rel.setUpdateTime(LocalDateTime.now());
             relMapper.updateById(rel);
 
             return Result.success(result);
@@ -365,8 +377,8 @@ public class EmergencyPlanFlowController {
                 .list();
 
         // 查询流程实例变量信息 // note 查询历史变量
-        List<HistoricVariableInstance> variableInstances = historyService.createHistoricVariableInstanceQuery().
-                processInstanceId(procInstId)
+        List<HistoricVariableInstance> variableInstances = historyService.createHistoricVariableInstanceQuery()
+                .processInstanceId(procInstId)
                 .list();
 
         StringBuilder sb = new StringBuilder();
@@ -385,7 +397,6 @@ public class EmergencyPlanFlowController {
         }
         return sb.toString();
     }
-
 
     /**
      * 6. 辅助接口：根据预案ID获取BPMN XML（供前端渲染）
