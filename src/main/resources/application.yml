@@ -5,7 +5,7 @@ spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource  # 显式指定 HikariCP
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/emergency_plan?currentSchema=flowable
+    url: jdbc:postgresql://localhost:5432/emergency_plan?currentSchema=public
     username: postgres
     password: root
     # HikariCP 核心配置（按需调整，默认值已满足大部分场景）
@@ -16,9 +16,10 @@ spring:
       connection-timeout: 60000    # 连接获取超时（1分钟，对应 Druid 的 max-wait）
       validation-timeout: 5000     # 连接验证超时
       connection-test-query: SELECT 1  # 连接验证SQL
+      data-source-properties:
+        searchPath: public,flowable    # 设置模式搜索路径
 
 # Flowable 配置：恢复 database-schema，HikariCP 完美支持 setSchema() + 保留所有模块 + 表前缀隔离
-# TODO FIXME
 flowable:
 #  modeler:
 #    app:
@@ -27,8 +28,8 @@ flowable:
 #    app:
 #      context-path: /flowable-rest
   # 其他Flowable配置（如数据库、用户等）
-  database-schema-update: false #（create 启动时删除所有表，再重新创建）（create-drop 启动时创建表，关闭时删除表【仅优雅关闭生效】）（false 启动时不检查、不更新任何表结构，【可手动导入】）（true 启动时检查并更新表结构 ）
-  database-schema: flowable
+  database-schema-update: false # 生产环境初次启动设置为create，服务启动成功后更改为false
+  database-schema: flowable  # 指定Flowable表所在的模式
   async-executor-activate: true
 #  database-type: postgres
 #  # 禁用所有非核心模块
@@ -39,7 +40,7 @@ flowable:
 #  cmmn:
 #    enabled: false
 #  form:
-#    enabled: false  # 关键：禁用 FORM 模块
+#    enabled: false
 #  app:
 #    enabled: false
 

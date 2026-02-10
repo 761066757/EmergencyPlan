@@ -18,7 +18,7 @@
             start_user_id_ AS startUserId,
             tenant_id_ AS tenantId,
             business_status_ AS businessStatus
-        FROM act_ru_execution
+        FROM flowable.act_ru_execution
         WHERE is_scope_ = true          -- 仅流程实例（根节点）
           AND is_active_ = true         -- 运行中
           AND suspension_state_ = 1;    -- 未挂起（1=激活，2=挂起）
@@ -36,7 +36,7 @@
             e.is_active_ AS isActive,
             e.start_act_id_ AS startActivityId,
             e.tenant_id_ AS tenantId
-        FROM act_ru_execution e
+        FROM flowable.act_ru_execution e
         WHERE e.proc_inst_id_ = #{procInstId}
         ORDER BY e.id_ ASC;
     </select>
@@ -59,7 +59,7 @@
             tenant_id_ AS tenantId,
             name_ AS processName,
             business_status_ AS businessStatus
-        FROM act_hi_procinst
+        FROM flowable.act_hi_procinst
         WHERE proc_inst_id_ = #{procInstId}; -- 注意：act_hi_procinst.id_ ≠ proc_inst_id_，用proc_inst_id_匹配
     </select>
 
@@ -81,7 +81,7 @@
             (CASE WHEN duration_ IS NOT NULL THEN duration_ / 1000 ELSE NULL END) AS durationSeconds,
             delete_reason_ AS deleteReason,
             tenant_id_ AS tenantId
-        FROM act_hi_actinst
+        FROM flowable.act_hi_actinst
         WHERE proc_inst_id_ = #{procInstId}
         ORDER BY start_time_ ASC, transaction_order_ ASC;
     </select>
@@ -118,7 +118,7 @@
             category_ AS category,
             tenant_id_ AS tenantId,
             last_updated_time_ AS lastUpdatedTime
-        FROM act_hi_taskinst t
+        FROM flowable.act_hi_taskinst t
         WHERE t.assignee_ = #{userId}
         <if test="finished != null">
             AND t.end_time_ IS <if test="finished">NOT</if> NULL
@@ -146,7 +146,7 @@
             priority_ AS priority,
             due_date_ AS dueDate,
             delete_reason_ AS deleteReason
-        FROM act_hi_taskinst
+        FROM flowable.act_hi_taskinst
         WHERE proc_inst_id_ = #{procInstId}
         ORDER BY start_time_ ASC;
     </select>
@@ -161,7 +161,7 @@
             start_time_ AS startTime,
             end_time_ AS endTime,
             priority_ AS priority
-            FROM act_hi_taskinst
+            FROM flowable.act_hi_taskinst
         WHERE start_time_ BETWEEN #{startTime} AND #{endTime}
         <if test="assignee != null and assignee != ''">
             AND assignee_ = #{assignee}

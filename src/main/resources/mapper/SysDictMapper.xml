@@ -4,8 +4,9 @@
 
     <!-- 按模块+类型查询下拉列表 -->
     <select id="selectDictOptionsByModuleAndType" resultType="java.util.Map">
-        SELECT dict_label as label, dict_code as value
-        -- FIXME 加模式名
+        SELECT
+          dict_label as label,
+          dict_code as value
         FROM public.sys_dict
         WHERE module_code = #{moduleCode}
           AND dict_type = #{dictType}
@@ -17,7 +18,7 @@
     <!-- 按模块查询所有步骤类型 -->
     <select id="selectStepTypeByModule" resultType="com.emergency.entity.SysDict">
         SELECT *
-        FROM public.sys_dict
+          FROM public.sys_dict
         WHERE module_code = #{moduleCode}
           AND dict_type = 'step_type'
           AND is_deleted = 0

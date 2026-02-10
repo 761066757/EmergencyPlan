@@ -11,7 +11,7 @@ import javax.sql.DataSource;
  * @description: Flowable流程引擎配置
  * @date 2026
  */
-@Configuration
+//@Configuration
 public class FlowableConfig implements EngineConfigurationConfigurer<SpringProcessEngineConfiguration> {
     @Override
     public void configure(SpringProcessEngineConfiguration engineConfiguration) {
@@ -21,6 +21,6 @@ public class FlowableConfig implements EngineConfigurationConfigurer<SpringProce
         DataSource dataSource = engineConfiguration.getDataSource();
         engineConfiguration.setDataSource(dataSource);
         // 关闭Flowable的数据库自动更新（使用手动脚本）
-        engineConfiguration.setDatabaseSchemaUpdate("false");
+        // engineConfiguration.setDatabaseSchemaUpdate("false"); // 注释掉避免与application.yml配置冲突
     }
 }
