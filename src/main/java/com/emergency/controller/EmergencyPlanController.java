@@ -40,7 +40,7 @@ public class EmergencyPlanController {
     private EmergencyPlanStepRelationService planStepRelationService;
 
     // 查询预案列表
-    @GetMapping("/list")
+    @GetMapping("/queryPlanList")
     public Result<List<PlanQueryVO>> getPlanList() {
         try {
             List<PlanQueryVO> planList = planService.getPlanList();
@@ -52,7 +52,7 @@ public class EmergencyPlanController {
     }
 
     // 保存预案
-    @PostMapping("/save")
+    @PostMapping("/savePlan")
     public Result<Boolean> savePlan(@RequestBody PlanSaveVO saveVO) {
         boolean success = planService.savePlan(saveVO.getPlan(), saveVO.getPlanStepRelations());
         return success ? Result.success(true) : Result.error("保存失败");
@@ -130,3 +130,4 @@ public class EmergencyPlanController {
         return Result.success(response);
     }
 }
+

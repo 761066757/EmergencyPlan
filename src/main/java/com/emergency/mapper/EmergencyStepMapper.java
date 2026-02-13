@@ -21,9 +21,9 @@ public interface EmergencyStepMapper extends BaseMapper<EmergencyStep> {
 
     // 核心：按模块查询步骤，并关联字典表获取步骤类型名称
     @Select("""
-        SELECT s.*, d.dict_label as step_type_name 
+        SELECT s.*, d.dict_value as step_type_name 
         FROM public.emergency_step s
-        LEFT JOIN public.sys_dict d ON s.step_type = d.dict_code 
+        LEFT JOIN public.sys_dict d ON s.step_type = d.dict_label 
                              AND d.module_code = #{moduleCode} 
                              AND d.dict_type = 'step_type' 
                              AND d.is_deleted = 0

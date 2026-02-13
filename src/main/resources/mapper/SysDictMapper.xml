@@ -6,7 +6,7 @@
     <select id="selectDictOptionsByModuleAndType" resultType="java.util.Map">
         SELECT
           dict_label as label,
-          dict_code as value
+          dict_value as value
         FROM public.sys_dict
         WHERE module_code = #{moduleCode}
           AND dict_type = #{dictType}

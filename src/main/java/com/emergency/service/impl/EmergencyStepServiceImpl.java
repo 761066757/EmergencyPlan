@@ -75,10 +75,7 @@ public class EmergencyStepServiceImpl extends ServiceImpl<EmergencyStepMapper, E
     @Override
     // 删除步骤（逻辑删除）
     public boolean deleteStep(String id) {
-        EmergencyStep step = new EmergencyStep();
-        step.setId(id);
-        step.setIsDeleted(1);
-        step.setUpdateTime(LocalDateTime.now());
-        return this.updateById(step);
+        int i = baseMapper.deleteById(id);
+        return i > 0;
     }
 }

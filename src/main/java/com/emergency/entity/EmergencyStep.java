@@ -2,6 +2,7 @@ package com.emergency.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.Value;
 
 import java.time.LocalDateTime;
 
@@ -38,7 +39,7 @@ public class EmergencyStep {
     private String stepDesc;
 
     /**
-     * 创建时间
+     * 创建时间·1
      */
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

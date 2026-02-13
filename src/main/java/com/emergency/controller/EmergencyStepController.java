@@ -32,13 +32,13 @@ public class EmergencyStepController {
     /**
      * 步骤列表查询
      */
-    @GetMapping("/listAll")
+    @GetMapping("/getStepList")
     public Result<?> getStepList() {
         return Result.success(stepService.list());
     }
 
     // 1. 按模块查询步骤列表（含类型名称）
-    @GetMapping("/list")
+    @GetMapping("/getStepListByM")
     public Result<List<EmergencyStepVO>> getStepList(@RequestParam(value = "moduleCode") String moduleCode) {
         try {
             List<EmergencyStepVO> stepList = stepService.listStepVOByModule(moduleCode);

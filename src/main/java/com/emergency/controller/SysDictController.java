@@ -13,7 +13,7 @@ import java.util.Map;
  * 步骤类型接口层
  */
 @RestController
-@RequestMapping("/api/dict")
+@RequestMapping("/dict")
 public class SysDictController {
 
     @Autowired
@@ -51,7 +51,7 @@ public class SysDictController {
     /**
      * 按模块+类型查询下拉列表
      */
-    @GetMapping("/options/module/{moduleCode}/type/{dictType}")
+    @GetMapping("/module/{moduleCode}/type/{dictType}")
     public Result<List<Map<String, String>>> getDictOptionsByModuleAndType(
             // 显式指定参数名
             @PathVariable(value = "moduleCode") String moduleCode,
