@@ -1,0 +1,40 @@
+# Spring Boot 配置
+spring:
+  application:
+    name: iscs-ep
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/emergency_plan?currentSchema=public
+    username: postgres
+    password: root
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      idle-timeout: 300000
+      connection-timeout: 60000
+      validation-timeout: 5000
+      connection-test-query: SELECT 1
+      data-source-properties:
+        searchPath: public,flowable
+
+# flowable 配置
+flowable:
+  database-schema-update: false # deploy 生产环境初次启动设置为create，服务启动成功后更改为false！！！
+  database-schema: flowable
+  async-executor-activate: false
+
+# grpc 配置
+grpc:
+  server:
+    port: 1633
+    address: 0.0.0.0
+    permit-keep-alive-without-calls: true
+    permit-keep-alive-time: 1m
+    max-inbound-message-size: 52428800
+  client:
+    GLOBAL:
+      negotiationType: plaintext
+      max-inbound-message-size: 20971520
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true

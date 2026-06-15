@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.emergency.mapper.FlowSchemaMapper">
+<mapper namespace="com.siasun.iscs.ep.mapper.FlowSchemaMapper">
     <!-- 1. 查询所有运行中的流程实例（适配 ACT_RU_EXECUTION 完整结构） -->
     <select id="selectProcInst" resultType="map">
         SELECT

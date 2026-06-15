@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.emergency.mapper.EmergencyPlanMapper">
+<mapper namespace="com.siasun.iscs.ep.mapper.EmergencyPlanMapper">
 
-    <resultMap id="PlanQueryVOMap" type="com.emergency.vo.PlanQueryVO">
+    <resultMap id="PlanQueryVOMap" type="com.siasun.iscs.ep.vo.EmergencyPlanQueryVO">
         <!-- 原 EmergencyPlan 字段映射 -->
         <id column="plan_id" property="planId"/> <!-- 主键字段映射 -->
         <id column="rel_id" property="relId"/> <!-- 流程关系主键（可忽略，不影响映射） -->
         <result column="plan_name" property="planName"/>
         <result column="plan_type" property="planType"/>
         <result column="plan_desc" property="planDesc"/>
+        <result column="plan_doc" property="planDoc"/>
+        <result column="plan_status" property="planStatus"/>
         <result column="bpmn_xml" property="bpmnXml"/>
         <result column="camera_ids" property="cameraIds"/>
         <result column="plan_create_time" property="planCreateTime"/>
@@ -19,7 +21,7 @@
         <!-- 原 EmergencyPlanFlowRel 字段映射 -->
         <result column="rel_plan_id" property="relPlanId"/>
         <result column="deploy_id" property="deployId"/>
-        <result column="proc_inst_id" property="procInstId"/>
+        <result column="cur_proc_inst_id" property="procInstId"/>
         <result column="current_task_id" property="currentTaskId"/>
         <result column="current_task_name" property="currentTaskName"/>
         <result column="flow_status" property="flowStatus"/>
@@ -36,6 +38,8 @@
         ep.plan_name AS plan_name,
         ep.plan_type AS plan_type,
         ep.plan_desc AS plan_desc,
+        ep.plan_doc AS plan_doc,
+        ep.plan_status AS plan_status,
         ep.bpmn_xml AS bpmn_xml,
         ep.camera_ids AS camera_ids,
         ep.create_time AS plan_create_time,
@@ -43,26 +47,38 @@
         ep.is_deleted AS plan_is_deleted,
 
         -- 原 EmergencyPlanFlowRel 字段，添加 rel_ 前缀别名，对应VO的 relXXX 字段
-        epr.id AS rel_id,
-        epr.plan_id AS rel_plan_id,
-        epr.deploy_id AS deploy_id,
-        epr.proc_inst_id AS proc_inst_id,
-        epr.current_task_id AS current_task_id,
-        epr.current_task_name AS current_task_name,
-        epr.flow_status AS flow_status,
-        epr.create_time AS rel_create_time,
-        epr.update_time AS rel_update_time,
-        epr.is_deleted AS rel_is_deleted
+        epfr.id AS rel_id,
+        epfr.plan_id AS rel_plan_id,
+        epfr.deploy_id AS deploy_id,
+        epfr.cur_proc_inst_id AS cur_proc_inst_id,
+        epfr.current_task_id AS current_task_id,
+        epfr.current_task_name AS current_task_name,
+        epfr.flow_status AS flow_status,
+        epfr.create_time AS rel_create_time,
+        epfr.update_time AS rel_update_time,
+        epfr.is_deleted AS rel_is_deleted
 
         FROM
         public.emergency_plan ep
         LEFT JOIN
-        public.emergency_plan_flow_rel epr ON ep.id = epr.plan_id
-        WHERE
-        -- 逻辑删除过滤：只查询未删除的数据
-        ep.is_deleted = 0
-        AND (epr.is_deleted = 0 OR epr.id IS NULL) <!-- 兼容无流程关系的预案，避免数据丢失 -->
+        public.emergency_plan_flow_rel epfr ON ep.id = epfr.plan_id AND epfr.is_deleted = 0
+        WHERE 1=1
+        <if test="planDTO.id != null and planDTO.id != ''">
+            AND ep.id = #{planDTO.id}
+        </if>
+        <if test="planDTO.planName != null and planDTO.planName != ''">
+            AND ep.plan_name LIKE CONCAT('%', #{planDTO.planName}, '%')
+        </if>
+        <if test="planDTO.planType != null and planDTO.planType != ''">
+            AND ep.plan_type = #{planDTO.planType}
+        </if>
+        <if test="planDTO.planStatus != null">
+            AND ep.plan_status = #{planDTO.planStatus}
+        </if>
+        -- 逻辑删除过滤：只查询plan未删除的数据
+        AND ep.is_deleted = 0
         ORDER BY
-        ep.create_time DESC; <!-- 按预案创建时间倒序，提升查询实用性 -->
+        ep.create_time DESC;
+
     </select>
 </mapper>
