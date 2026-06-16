@@ -3,7 +3,6 @@ package com.siasun.iscs.ep.controller;
 import com.siasun.iscs.ep.dto.EmergencyPlanDTO;
 import com.siasun.iscs.ep.entity.EmergencyPlan;
 import com.siasun.iscs.ep.service.EmergencyPlanService;
-import com.siasun.iscs.ep.service.EmergencyPlanTaskRelService;
 import com.siasun.iscs.ep.vo.EmergencyPlanSaveVO;
 import com.siasun.iscs.ep.vo.EmergencyPlanQueryVO;
 import com.siasun.iscs.ep.vo.Result;
@@ -27,8 +26,6 @@ import java.util.Map;
 public class EmergencyPlanController {
     @Resource
     private EmergencyPlanService planService;
-    @Resource
-    private EmergencyPlanTaskRelService planTaskRelService;
 
 
     /**
@@ -76,26 +73,18 @@ public class EmergencyPlanController {
     /**
      * 查询预案详情
      */
-    @GetMapping("/getPlanDetail")
+    @PostMapping("/getPlanDetail")
     public Result<EmergencyPlan> getPlanDetail(@RequestParam("planId") String planId) {
         return Result.success(planService.getPlanDetail(planId));
     }
 
 
     /**
-     * 查看预案文档
-     */
-    @GetMapping("/viewPlanDoc")
-    public Result<String> viewPlanDoc(@RequestParam(value = "planId") String planId) {
-        return Result.success(planService.viewPlanDoc(planId));
-    }
-
-    /**
      * 实时监控
      */
-    @GetMapping("/realTimeMonitor")
-    public Result<String> realTimeMonitor(@RequestParam(value = "planId") String planId) {
-        return Result.success(planService.realTimeMonitor(planId));
+    @PostMapping("/realTimeMonitor")
+    public Result<String> realTimeMonitor(@RequestParam(value = "planId") String planId, @RequestParam(value = "cameraId") String cameraId) {
+        return Result.success(planService.realTimeMonitor(planId, cameraId));
     }
 
 }

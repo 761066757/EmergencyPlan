@@ -90,7 +90,7 @@ public class EmergencyPlanServiceImpl extends ServiceImpl<EmergencyPlanMapper, E
 
         String originalFilename = file.getOriginalFilename();
         // 2. 文件名非空校验，防止空指针
-        if (originalFilename == null || originalFilename.trim().isBlank()) {
+        if (originalFilename.trim().isBlank()) {
             return Result.error("上传失败：文件名称无效，无法识别");
         }
 
@@ -164,47 +164,37 @@ public class EmergencyPlanServiceImpl extends ServiceImpl<EmergencyPlanMapper, E
         return this.getById(planId);
     }
 
-    /**
-     * 查看预案文档
-     */
-    @Override
-    public String viewPlanDoc(String planId) {
-        EmergencyPlan plan = this.getById(planId);
-        if (plan != null) {
-            // 可直接预览的url
-            return plan.getPlanDoc();
-        }
-        return null;
-    }
 
     /**
      * 实时监控
      */
     @Override
-    public String realTimeMonitor(String planId) {
+    public String realTimeMonitor(String planId, String cameraId) {
         EmergencyPlan plan = this.getById(planId);
         String[] cameraIds = plan.getCameraIds().split(";");
+        if (!Arrays.asList(cameraIds).contains(cameraId)) {
+            return "Invalid camera ID: " + cameraId;
+        }
+
         // TODO 调用第三方服务获取实时视频预览流地址url-待完善
 
-//        for (String cameraId : cameraIds) {
-//            // 调用gRPC获取单个摄像头的流地址
-//            ScsServiceProto.GetRealTimePreviewReq req = ScsServiceProto.GetRealTimePreviewReq.newBuilder()
-//                    .setDeviceId(cameraId)
-//                    .build();
-//            ScsServiceProto.GetRealTimePreviewResp resp = scsGrpcClient.getRealTimePreview(req);
-//
-//            // 过滤无效响应或空URL
-//            if (resp.getCode() == ScsServiceProto.Result.OK &&
-//                    StringUtils.isNotEmpty(resp.getUrl()) &&
-//                    !resp.getUrl().trim().isEmpty()) {
-//                urlList.add(AlarmServiceProto.RealTimePreviewUrl.newBuilder()
-//                        .setUrl(resp.getUrl())
-//                        .build());
-//            }
-//        }
-//        return urlList;
+//        // 调用gRPC获取单个摄像头的流地址
+//        ScsServiceProto.GetRealTimePreviewReq req = ScsServiceProto.GetRealTimePreviewReq.newBuilder()
+//                .setDeviceId(cameraId)
+//                .build();
+//        ScsServiceProto.GetRealTimePreviewResp resp = scsGrpcClient.getRealTimePreview(req);
 
-        return null;
+//        // 过滤无效响应或空URL
+//        if (resp.getCode() == ScsServiceProto.Result.OK &&
+//                StringUtils.isNotEmpty(resp.getUrl()) &&
+//                !resp.getUrl().trim().isEmpty()) {
+//            urlList.add(AlarmServiceProto.RealTimePreviewUrl.newBuilder()
+//                    .setUrl(resp.getUrl())
+//                    .build());
+//        }
+
+        // 测试数据
+        return "rtsp://133.10.2.51:9100/dss/monitor/param/cameraid=1000017%240%26substream=1?token=142";
     }
 
 }

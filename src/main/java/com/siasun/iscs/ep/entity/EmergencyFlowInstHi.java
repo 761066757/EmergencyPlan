@@ -57,7 +57,7 @@ public class EmergencyFlowInstHi {
     private String cameraIds;
 
     /**
-     * 录像回放
+     * 录像回放 cramerId1:videoUrl1;camerId2:videoUrl2;camerId3:videoUrl3...
      */
     private String videoUrls;
 

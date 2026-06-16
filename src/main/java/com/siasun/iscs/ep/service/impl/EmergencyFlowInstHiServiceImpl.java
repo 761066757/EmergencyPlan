@@ -58,6 +58,10 @@ public class EmergencyFlowInstHiServiceImpl extends ServiceImpl<EmergencyFlowIns
             for (String cameraId : cameraIds) {
                 // TODO: 调用第三方服务获取录像回放url并更新 video_urls 字段-待完善
                 log.info("异步保存录像回放完成, cameraId={}", cameraId);
+
+                // 测试数据
+                String testUrl = "https://www.w3schools.com/html/mov_bbb.mp4";
+                instHi.setVideoUrls(instHi.getVideoUrls() + cameraId + ":" + testUrl + ";");
             }
         } catch (Exception e) {
             log.error("异步保存录像回放失败, instHiId={}", instHiId, e);

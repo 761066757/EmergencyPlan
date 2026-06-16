@@ -45,13 +45,8 @@ public interface EmergencyPlanService extends IService<EmergencyPlan> {
     EmergencyPlan getPlanDetail(String planId);
 
     /**
-     * 查看预案文档
-     */
-    String viewPlanDoc(String planId);
-
-    /**
      * 实时监控
      */
-    String realTimeMonitor(String planId);
+    String realTimeMonitor(String planId, String cameraId);
 
 }
