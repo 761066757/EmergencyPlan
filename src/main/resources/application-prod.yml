@@ -2,12 +2,14 @@
 spring:
   application:
     name: iscs-ep
+  # 数据库配置
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/emergency_plan?currentSchema=public
+    url: jdbc:postgresql://localhost:5432/iscs?currentSchema=public
     username: postgres
     password: root
+    # 连接池配置
     hikari:
       minimum-idle: 5
       maximum-pool-size: 15
@@ -22,7 +24,21 @@ spring:
 flowable:
   database-schema-update: false # deploy 生产环境初次启动设置为create，服务启动成功后更改为false！！！
   database-schema: flowable
+  # 禁用所有非核心模块
+  idm:
+    enabled: false
+  dmn:
+    enabled: false
+  cmmn:
+    enabled: false
+  app:
+    enabled: false
+  # 关闭异步执行
   async-executor-activate: false
+  # 开启自动部署
+  check-process-definitions: true
+  # 流程文件定义路径
+  process-definition-location-prefix: classpath*:/processes/business/
 
 # grpc 配置
 grpc:

@@ -52,7 +52,7 @@ class EmergencyPlanApplicationTests {
         }
         // 部署XML文件
         Deployment deployment = repositoryService.createDeployment()
-                .addClasspathResource("processes/emergency-plan-test.bpmn20.xml")
+                .addClasspathResource("processes/example/emergency-plan-test.bpmn20.xml")
                 .name("应急预案流程")
                 .deploy();
         return Result.success("流程部署成功", deployment.getId());

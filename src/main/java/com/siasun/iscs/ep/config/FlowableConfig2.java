@@ -35,12 +35,16 @@ public class FlowableConfig2 {
         SpringProcessEngineConfiguration config = new SpringProcessEngineConfiguration();
 
         // 1. 配置核心依赖（必须）
-        config.setDataSource(dataSource); // 复用Spring数据源
-        config.setTransactionManager(transactionManager); // 绑定Spring事务管理器
+        // 复用Spring数据源
+        config.setDataSource(dataSource);
+        // 绑定Spring事务管理器
+        config.setTransactionManager(transactionManager);
 
-        // 2. 自定义配置项（和你原来的需求一致）
-        config.setAsyncExecutorActivate(false); // 关闭异步执行器（定时任务）
-        config.setDatabaseSchemaUpdate("create"); // 关闭数据库自动更新 FIXME 首次启动设置create，创建表结构成功后设置为false
+        // 2. 自定义配置项
+        // 关闭异步执行器（定时任务）
+        config.setAsyncExecutorActivate(false);
+        // 关闭数据库自动更新 （首次启动设置create，创建表结构成功后设置为false）
+        config.setDatabaseSchemaUpdate("create");
         // 可选：设置流程引擎名称（按需）
         config.setEngineName("emergency-process-engine");
 

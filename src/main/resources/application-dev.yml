@@ -22,28 +22,23 @@ spring:
 
 # Flowable 配置：恢复 database-schema，HikariCP 完美支持 setSchema() + 保留所有模块 + 表前缀隔离
 flowable:
-  #  modeler:
-  #    app:
-  #      context-path: /flowable-modeler # 模型器上下文路径（和前端代理的/flowable-modeler一致）
-  #  rest:
-  #    app:
-  #      context-path: /flowable-rest
-  # 其他Flowable配置（如数据库、用户等）
   database-schema-update: false # deploy 生产环境初次启动设置为create，服务启动成功后更改为false！！！
-  database-schema: flowable  # 指定Flowable表所在的模式
-  async-executor-activate: false # 异步执行器（Async Executor），它利用数据库行锁（或表锁）来确保定时任务和异步任务在主备或多活环境下只被一个节点执行，不会重复触发。
-#  database-type: postgres
-#  # 禁用所有非核心模块
-#  idm:
-#    enabled: false
-#  dmn:
-#    enabled: false
-#  cmmn:
-#    enabled: false
-#  form:
-#    enabled: false
-#  app:
-#    enabled: false
+  database-schema: flowable  # 指定 Flowable 表所在的模式
+  # 禁用所有非核心模块
+  idm:
+    enabled: false
+  dmn:
+    enabled: false
+  cmmn:
+    enabled: false
+  app:
+    enabled: false
+  # 异步执行器（Async Executor），它利用数据库行锁（或表锁）来确保定时任务和异步任务在主备或多活环境下只被一个节点执行，不会重复触发。
+  async-executor-activate: false
+  # 开启自动部署
+  check-process-definitions: true
+  # 配置流程定义文件路径（只扫描 business/ 目录下的 BPMN 文件）
+  process-definition-location-prefix: classpath*:/processes/business/
 
 # grpc 配置
 grpc:
