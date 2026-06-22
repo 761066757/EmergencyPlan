@@ -517,11 +517,20 @@ public class EmergencyPlanFlowRelServiceImpl extends ServiceImpl<EmergencyPlanFl
     }
 
     /**
-     * 获取流程历史（包括审批节点、处理人、耗时）
+     * 查询流程历史（包括审批节点、处理人、耗时）
+     * <p>业务流程：
+     * 1. 查询历史流程实例（act_hi_procinst）：每次start对应一条
+     * 2. 查询历史活动节点（act_hi_actinst）：每个节点的进入/离开
+     * 3. 查询历史任务实例（act_hi_taskinst）：每次任务创建/完成
+     * 4. 查询历史流程变量（act_hi_varinst）：流程中设置的变量
+     * 5. 查询历史详细变更（act_hi_detail）：最细粒度的变更记录
+     *
+     * @param procInstId 流程实例ID
+     * @return 流程历史数据（当前返回null，待完善返回结构）
      */
     @Override
     public String queryProcessHistory(String procInstId) {
-        // 查询-历史流程实例（每次 start 一条）【act_hi_procinst】
+        // 1. 查询历史流程实例（act_hi_procinst）：每次start对应一条
         if (procInstId == null || procInstId.isEmpty()) {
             List<HistoricProcessInstance> historicProcessInstanceList = historyService.createHistoricProcessInstanceQuery()
                     .list();
@@ -533,14 +542,13 @@ public class EmergencyPlanFlowRelServiceImpl extends ServiceImpl<EmergencyPlanFl
             log.info("历史流程实例：{}", historicProcessInstance);
         }
 
-        // 查询-历史活动节点（每个节点进入/离开）【act_hi_actinst】
+        // 2. 查询历史活动节点（act_hi_actinst）：每个节点的进入/离开
         List<HistoricActivityInstance> historicActivityInstances = historyService.createHistoricActivityInstanceQuery()
                 .processInstanceId(procInstId)
                 .list();
         log.info("历史活动节点：{}", historicActivityInstances);
 
-
-        // 查询-历史任务实例（每次任务创建/完成）【act_hi_taskinst】
+        // 3. 查询历史任务实例（act_hi_taskinst）：每次任务创建/完成
         List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery()
                 .processInstanceId(procInstId)
                 .orderByTaskCreateTime()
@@ -548,23 +556,30 @@ public class EmergencyPlanFlowRelServiceImpl extends ServiceImpl<EmergencyPlanFl
                 .list();
         log.info("历史任务实例：{}", historicTasks);
 
-        // 查询-历史流程变量【act_hi_varinst】
+        // 4. 查询历史流程变量（act_hi_varinst）：流程中设置的变量
         List<HistoricVariableInstance> variableInstances = historyService.createHistoricVariableInstanceQuery()
                 .processInstanceId(procInstId)
                 .list();
         log.info("历史流程变量：{}", variableInstances);
 
-        // 查询-历史详细变更（最细粒度）【act_hi_detail】
+        // 5. 查询历史详细变更（act_hi_detail）：最细粒度的变更记录
         List<HistoricDetail> details = historyService.createHistoricDetailQuery()
                 .processInstanceId(procInstId)
                 .list();
         log.info("历史详细变更：{}", details);
 
+        // TODO 封装返回结构（审批节点、处理人、耗时等）
         return null;
     }
 
     /**
-     * 根据预案ID获取BPMN XML（供前端渲染）
+     * 根据预案ID获取BPMN XML
+     * <p>业务流程：
+     * 1. 根据预案ID查询主表记录
+     * 2. 返回 bpmnXml 字段，供前端渲染流程图
+     *
+     * @param planId 预案主键ID
+     * @return BPMN XML字符串
      */
     @Override
     public Result<String> getBpmnXml(String planId) {

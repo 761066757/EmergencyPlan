@@ -4,6 +4,7 @@ import com.siasun.iscs.ep.dto.EmergencyTaskDTO;
 import com.siasun.iscs.ep.service.EmergencyTaskService;
 import com.siasun.iscs.ep.vo.Result;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +35,7 @@ public class EmergencyTaskController {
      * 保存任务（新增/编辑）
      */
     @PostMapping("/save")
-    public Result<Boolean> saveTask(@RequestBody EmergencyTaskDTO taskDTO) {
+    public Result<Boolean> saveTask(@Valid @RequestBody EmergencyTaskDTO taskDTO) {
         try {
             boolean success = taskService.saveTask(taskDTO);
             return success ? Result.success(true) : Result.error("保存失败");

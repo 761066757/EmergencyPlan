@@ -5,6 +5,7 @@ import com.siasun.iscs.ep.entity.EmergencyFlowInstHi;
 import com.siasun.iscs.ep.service.EmergencyFlowInstHiService;
 import com.siasun.iscs.ep.vo.Result;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +32,7 @@ public class EmergencyFlowInstHiController {
      * 查询流程实例历史列表
      */
     @PostMapping("/queryHistory")
-    public Result<List<EmergencyFlowInstHi>> queryList(@RequestBody EmergencyFlowInstHiDTO dto) {
+    public Result<List<EmergencyFlowInstHi>> queryList(@Valid @RequestBody EmergencyFlowInstHiDTO dto) {
         List<EmergencyFlowInstHi> list = emergencyFlowInstHiService.queryList(dto);
         return Result.success(list);
     }

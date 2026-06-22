@@ -7,6 +7,7 @@ import com.siasun.iscs.ep.vo.EmergencyPlanSaveVO;
 import com.siasun.iscs.ep.vo.EmergencyPlanQueryVO;
 import com.siasun.iscs.ep.vo.Result;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,7 +33,7 @@ public class EmergencyPlanController {
      * 保存预案
      */
     @PostMapping("/savePlan")
-    public Result<Boolean> savePlan(@RequestBody EmergencyPlanSaveVO saveVO) {
+    public Result<Boolean> savePlan(@Valid @RequestBody EmergencyPlanSaveVO saveVO) {
         boolean success = planService.savePlan(saveVO.getPlan(), saveVO.getPlanTaskRelList());
         return success ? Result.success(true) : Result.error("保存失败");
     }
@@ -60,7 +61,7 @@ public class EmergencyPlanController {
      * 查询预案列表
      */
     @PostMapping("/queryPlanList")
-    public Result<List<EmergencyPlanQueryVO>> getPlanList(@RequestBody EmergencyPlanDTO planDTO) {
+    public Result<List<EmergencyPlanQueryVO>> getPlanList(@Valid @RequestBody EmergencyPlanDTO planDTO) {
         try {
             List<EmergencyPlanQueryVO> planList = planService.getPlanList(planDTO);
             return Result.success(planList);

@@ -2,6 +2,8 @@ package com.siasun.iscs.ep.vo;
 
 import com.siasun.iscs.ep.dto.EmergencyPlanDTO;
 import com.siasun.iscs.ep.dto.EmergencyPlanTaskRelDTO;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.List;
@@ -17,10 +19,13 @@ public class EmergencyPlanSaveVO {
     /**
      * 预案信息
      */
+    @NotNull(message = "预案信息不能为空")
+    @Valid
     private EmergencyPlanDTO plan;
 
     /**
      * 预案关联任务信息
      */
+    @Valid
     private List<EmergencyPlanTaskRelDTO> planTaskRelList;
 }

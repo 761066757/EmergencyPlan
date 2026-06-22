@@ -1,5 +1,6 @@
 package com.siasun.iscs.ep.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -30,16 +31,19 @@ public class EmergencyPlanTaskRelDTO {
     /**
      * 任务类型
      */
+    @NotBlank(message = "任务类型不能为空")
     private String taskType;
 
     /**
      * Flowable节点ID
      */
+    @NotBlank(message = "Flowable节点ID不能为空")
     private String flowNodeId;
 
     /**
      * Flowable节点名称
      */
+    @NotBlank(message = "Flowable节点名称不能为空")
     private String flowNodeName;
 
     /**

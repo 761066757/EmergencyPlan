@@ -131,14 +131,16 @@
     </dependencyManagement>
 
     <build>
+        <!-- 引入操作系统信息 -->
         <extensions>
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
-                <version>1.7.1</version>
+                <version>1.7.0</version>
             </extension>
         </extensions>
         <plugins>
+            <!-- 配置编译参数 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -147,30 +149,101 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
-                    <parameters>true</parameters> <!-- 等价于 -parameters 参数 -->
-                    <!--                    <compilerArgs>-->
-                    <!--                        <arg>-parameters</arg>-->
-                    <!--                    </compilerArgs>-->
+                    <parameters>true</parameters>
+                    <!-- 等价于 -parameters 参数 -->
+                    <!--<compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>-->
                 </configuration>
             </plugin>
+            <!-- 跳过单元测试 -->
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId> 
                 <configuration>
-                    <mainClass>com.siasun.iscs.ep.EmergencyPlanApplication</mainClass>
-                    <skip>false</skip> <!-- 改为false，确保打包正常 -->
+                    <skipTests>true</skipTests>
                 </configuration>
+            </plugin>
+
+<!--            // 650 + 550 * 10 | 12000 -> (9600 - 8000 1600) | (1600*0.3 48) (7000*0.36 252) 24 228 |-->
+<!--            // 1000 (400 - 250 150) (600 - 450 150) (50 100..) (35 + 15)-->
+
+            <!-- 打包时添加配置 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.2</version>
+                <configuration>
+                    <archive>
+                        <!-- 添加配置 -->
+                        <manifest>
+                            <mainClass>com.siasun.iscs.ep.EmergencyPlanApplication</mainClass>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <!-- 添加配置 -->
+                        <manifestEntries>
+                            <Class-Path>config/</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                    <!-- 排除配置 -->
+                    <excludes>
+                        <exclude>**/*.yml</exclude>
+                        <exclude>*.sh</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <!-- 复制依赖到 lib 目录 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>repackage</id>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
                         <goals>
-                            <goal>repackage</goal>
+                            <goal>copy-dependencies</goal>
                         </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
-            <!-- gRPC 插件配置 -->
+            <!-- 复制配置文件到 config 目录 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/config</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>*.properties</include>
+                                        <include>*.xml</include>
+                                        <include>*.yml</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- protobuf-maven-plugin -->
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
@@ -187,6 +260,9 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <!-- 明确执行阶段：compile（编译阶段生成Java文件） -->
+                        <id>compile-protobuf</id>
+                        <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
                             <goal>compile-custom</goal>

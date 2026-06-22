@@ -1,6 +1,7 @@
 package com.siasun.iscs.ep.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -27,16 +28,19 @@ public class EmergencyTaskDTO {
     /**
      * 任务编码
      */
+    @NotNull(message = "任务编码不能为空")
     private Integer taskCode;
 
     /**
      * 任务名称
      */
+    @NotBlank(message = "任务名称不能为空")
     private String taskName;
 
     /**
      * 任务类型
      */
+    @NotBlank(message = "任务类型不能为空")
     private String taskType;
 
     /**

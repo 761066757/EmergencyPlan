@@ -1,15 +1,16 @@
+## 业务说明文档
 ### 实施步骤
 1. 首次部署时：
 * 设置 database-schema-update: create
 * 启动应用，让 Flowable 创建所需表结构
-* 验证表结构创建成功（flowable7.1.0 构建60张表）
+* 验证表结构创建成功（flowable7.1.0 构建62张表）
 2. 后续运行时：
 * 修改为 database-schema-update: false
 * 重启应用
 * 这样即使服务崩溃重启也不会丢失数据
 
 ---
-
+### 目的
 1. 数据安全保障：
 * false 模式下，Flowable 不会尝试修改数据库结构
 * 避免因版本升级导致的意外表结构变更
