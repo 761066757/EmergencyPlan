@@ -8,11 +8,11 @@ import javax.sql.DataSource;
 /**
  * @author liao
  * @version 1.0
- * @description: Flowable流程引擎配置
+ * @description: Flowable流程引擎配置 -（ 对 starter 创建的引擎做二次配置）
  * @date 2026
  */
 //@Configuration
-public class FlowableConfig implements EngineConfigurationConfigurer<SpringProcessEngineConfiguration> {
+public class FlowableConfig1 implements EngineConfigurationConfigurer<SpringProcessEngineConfiguration> {
     @Override
     public void configure(SpringProcessEngineConfiguration engineConfiguration) {
         // 关闭Flowable的定时任务（按需开启）

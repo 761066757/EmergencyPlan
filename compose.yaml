@@ -1,0 +1,40 @@
+services:
+  server:
+    build:
+      context: .
+    image: emergencyplan-server:${APP_VERSION:-latest}
+    ports:
+      - "3278:3278"
+      - "1633:1633"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # 覆盖数据库连接，指向 compose 内的 PostgreSQL 服务
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/emergency_plan?currentSchema=public
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+      # jasypt 密钥，部署时替换为真实值
+      OSS: ${OSS:-your-jasypt-secret}
+    restart: unless-stopped
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    user: postgres
+    environment:
+      POSTGRES_DB: emergency_plan
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:

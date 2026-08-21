@@ -34,3 +34,6 @@ build/
 
 # 忽略整个 log 文件夹
 log/
+
+# 忽略 .mvn 文件夹
+.mvn/

@@ -11,7 +11,7 @@ import javax.sql.DataSource;
 /**
  * @author liao
  * @version 1.0
- * @description: Flowable流程引擎配置2 - 完全抛弃 starter，手动引入核心依赖
+ * @description: Flowable流程引擎配置2 -（完全抛弃 starter，手动创建 ProcessEngine 并注册所有 Service Bean）
  * @date 2026
  */
 //@Configuration

@@ -3,6 +3,11 @@ spring:
   application:
     name: emergency-plan
   # 数据库配置：改用 HikariCP（Spring Boot 默认，无需额外引入依赖）
+  # SQL 初始化：启动时自动创建 Flowable schema
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
   datasource:
     type: com.zaxxer.hikari.HikariDataSource  # 显式指定 HikariCP
     driver-class-name: org.postgresql.Driver
@@ -22,7 +27,7 @@ spring:
 
 # Flowable 配置：恢复 database-schema，HikariCP 完美支持 setSchema() + 保留所有模块 + 表前缀隔离
 flowable:
-  database-schema-update: false # deploy 生产环境初次启动设置为create，服务启动成功后更改为false！！！
+  database-schema-update: create # 首次部署建表，建成功后改为false
   database-schema: flowable  # 指定 Flowable 表所在的模式
   # 禁用所有非核心模块
   idm:

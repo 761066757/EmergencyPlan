@@ -1,4 +1,8 @@
 ## 业务说明文档
+
+### 项目背景
+iscs-ep（emergency plan）是 ISCS 平台下的应急预案管理子系统，基于 Flowable 7.1.0 工作流引擎实现应急预案的全生命周期管理，包括预案编制、流程定义、发布部署、启动执行、任务流转及历史追溯
+
 ### 实施步骤
 1. 首次部署时：
 * 设置 database-schema-update: create

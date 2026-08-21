@@ -2,6 +2,11 @@
 spring:
   application:
     name: iscs-ep
+  # SQL 初始化：启动时自动创建 Flowable schema
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
   # 数据库配置
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
